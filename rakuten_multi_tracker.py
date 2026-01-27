@@ -2,7 +2,7 @@ import os
 import time
 import csv
 import logging
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from playwright.sync_api import sync_playwright
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
@@ -230,7 +230,9 @@ def update_spreadsheet():
         all_results = []
 
         
-        current_date = datetime.now().strftime("%Y-%m-%d %H:%M")
+        # 日本時間（JST = UTC+9）で日時を取得
+        jst = timezone(timedelta(hours=9))
+        current_date = datetime.now(jst).strftime("%Y-%m-%d %H:%M")
         
         for idx, task in enumerate(keywords_list, 1):
             logger.info(f"Processing keyword {idx}/{len(keywords_list)}: {task['keyword']}")
