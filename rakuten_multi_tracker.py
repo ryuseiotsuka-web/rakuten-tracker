@@ -204,15 +204,22 @@ def update_spreadsheet():
     
     logger.info(f"Total keywords to process: {len(keywords_list)}")
     
-    # 最終書き込み行を読み込んで次の行から追記
-    if os.path.exists(LAST_ROW_FILE):
-        with open(LAST_ROW_FILE, "r") as f:
-            last_row = int(f.read().strip())
-            start_row = last_row + 1
-        logger.info(f"Last written row: {last_row}, starting from row {start_row}")
-    else:
-        start_row = 2  # 初回は2行目から（1行目はヘッダー）
-        logger.info(f"First run - starting from row {start_row}")
+    # スプレッドシートから最終行を自動検出
+    try:
+        result = service.spreadsheets().values().get(
+            spreadsheetId=SHEET_ID,
+            range=f'{RESULTS_SHEET_NAME}!A:A'
+        ).execute()
+        values = result.get('values', [])
+        # 空白行を除外して、実際にデータがある最後の行を検出
+        non_empty_rows = [i for i, row in enumerate(values, start=1) if row and row[0].strip()]
+        last_row = non_empty_rows[-1] if non_empty_rows else 1
+        start_row = last_row + 1
+        logger.info(f"Auto-detected last row: {last_row}, starting from row {start_row}")
+    except Exception as e:
+        logger.warning(f"Failed to auto-detect last row: {e}, using row 2")
+        start_row = 2  # エラー時は2行目から
+
 
     with sync_playwright() as p:
         # CI環境（GitHub Actions）またはDocker headlessモードかどうかでheadless設定を変更
@@ -269,13 +276,8 @@ def update_spreadsheet():
         success = write_to_sheets(service, start_row, all_results)
         
         if success:
-            # 最終書き込み行を保存（次回はこの次の行から追記）
-            final_row = start_row + len(all_results) - 1
-            with open(LAST_ROW_FILE, "w") as f:
-                f.write(str(final_row))
-            logger.info(f"📝 Data written to rows {start_row} to {final_row}")
-            logger.info(f"📝 Next run will start from row {final_row + 1}")
-            print(f"📝 Data written to rows {start_row} to {final_row}")
+            logger.info(f"📝 Data written to rows {start_row} to {start_row + len(all_results) - 1}")
+            print(f"📝 Data written to rows {start_row} to {start_row + len(all_results) - 1}")
     except Exception as e:
         logger.error(f"❌ Failed to write to Google Sheets: {e}")
         print(f"❌ Failed to write to Google Sheets: {e}")
