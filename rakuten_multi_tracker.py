@@ -144,8 +144,8 @@ def load_keywords_from_sheet(service):
         print(f"❌ Error loading keywords from spreadsheet: {e}")
         return []
 
-def write_to_sheets(service, start_row, data):
-    """Google Sheetsに一括書き込み"""
+def write_to_sheets(service, data):
+    """Google Sheetsに追記（自動で行を追加）"""
     try:
         # データを準備
         values = []
@@ -158,28 +158,25 @@ def write_to_sheets(service, start_row, data):
                 str(row_data['organic'])
             ])
         
-        # 書き込み範囲を指定（結果シートに書き込む）
-        range_name = f'{RESULTS_SHEET_NAME}!A{start_row}:E{start_row + len(values) - 1}'
-        
-        body = {
-            'values': values
-        }
-        
-        result = service.spreadsheets().values().update(
+        # appendを使用して、自動的に末尾に追記 & 行不足なら追加
+        result = service.spreadsheets().values().append(
             spreadsheetId=SHEET_ID,
-            range=range_name,
+            range=f'{RESULTS_SHEET_NAME}!A1',
             valueInputOption='RAW',
-            body=body
+            insertDataOption='INSERT_ROWS',
+            body={'values': values}
         ).execute()
         
-        logger.info(f"✅ Successfully wrote {result.get('updatedCells')} cells to spreadsheet")
-        print(f"✅ Successfully wrote {result.get('updatedCells')} cells to spreadsheet")
+        updates = result.get('updates', {})
+        logger.info(f"✅ Successfully appended to spreadsheet: {updates.get('updatedRange')}")
+        print(f"✅ Successfully appended to spreadsheet: {updates.get('updatedRange')}")
         return True
         
     except Exception as e:
-        logger.error(f"❌ Error writing to spreadsheet: {e}")
-        print(f"❌ Error writing to spreadsheet: {e}")
+        logger.error(f"❌ Error appending to spreadsheet: {e}")
+        print(f"❌ Error appending to spreadsheet: {e}")
         return False
+
 
 def update_spreadsheet():
     start_time = datetime.now()
@@ -204,22 +201,12 @@ def update_spreadsheet():
     
     logger.info(f"Total keywords to process: {len(keywords_list)}")
     
-    # スプレッドシートから最終行を自動検出
+    # スプレッドシートの書き込み準備（appendを使用するため開始行の計算は不要）
     try:
-        result = service.spreadsheets().values().get(
-            spreadsheetId=SHEET_ID,
-            range=f'{RESULTS_SHEET_NAME}!A:A'
-        ).execute()
-        values = result.get('values', [])
-        # 空白行を除外して、実際にデータがある最後の行を検出
-        non_empty_rows = [i for i, row in enumerate(values, start=1) if row and row[0].strip()]
-        last_row = non_empty_rows[-1] if non_empty_rows else 1
-        start_row = last_row + 1
-        logger.info(f"Auto-detected last row: {last_row}, starting from row {start_row}")
+        service = get_sheets_service()
     except Exception as e:
-        logger.warning(f"Failed to auto-detect last row: {e}, using row 2")
-        start_row = 2  # エラー時は2行目から
-
+        logger.error(f"❌ Failed to get sheets service: {e}")
+        return
 
     with sync_playwright() as p:
         # CI環境（GitHub Actions）またはDocker headlessモードかどうかでheadless設定を変更
@@ -268,19 +255,16 @@ def update_spreadsheet():
         logger.info(f"✅ Scraping completed. Total results: {len(all_results)}")
     
     # 2. Google Sheetsに書き込み
-    logger.info("📊 Writing to Google Sheets...")
-    print("📊 Writing to Google Sheets...")
+    logger.info("📊 Writing to Google Sheets (Appending)...")
+    print("📊 Writing to Google Sheets (Appending)...")
     
     try:
-        # serviceは既に取得済みなので再利用
-        success = write_to_sheets(service, start_row, all_results)
-        
-        if success:
-            logger.info(f"📝 Data written to rows {start_row} to {start_row + len(all_results) - 1}")
-            print(f"📝 Data written to rows {start_row} to {start_row + len(all_results) - 1}")
+        # serviceは既に取得済み
+        success = write_to_sheets(service, all_results)
     except Exception as e:
         logger.error(f"❌ Failed to write to Google Sheets: {e}")
         print(f"❌ Failed to write to Google Sheets: {e}")
+
     
     # 3. CSV保存
     save_to_csv(all_results)
