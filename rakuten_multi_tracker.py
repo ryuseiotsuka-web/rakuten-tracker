@@ -231,8 +231,9 @@ def update_spreadsheet():
 
         
         # 日本時間（JST = UTC+9）で日時を取得
-        jst = timezone(timedelta(hours=9))
-        current_date = datetime.now(jst).strftime("%Y-%m-%d %H:%M")
+        # GitHub ActionsはUTC環境なので、明示的に9時間加算
+        jst_time = datetime.utcnow() + timedelta(hours=9)
+        current_date = jst_time.strftime("%Y-%m-%d %H:%M")
         
         for idx, task in enumerate(keywords_list, 1):
             logger.info(f"Processing keyword {idx}/{len(keywords_list)}: {task['keyword']}")
