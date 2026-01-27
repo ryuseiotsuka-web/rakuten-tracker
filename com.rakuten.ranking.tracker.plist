@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.rakuten.ranking.tracker</string>
+    
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/bin/python3</string>
+        <string>/Users/kananagai/Downloads/楽天自動化ツール/03_検索順位チェック/rakuten_multi_tracker.py</string>
+    </array>
+    
+    <key>WorkingDirectory</key>
+    <string>/Users/kananagai/Downloads/楽天自動化ツール/03_検索順位チェック</string>
+    
+    <key>StartCalendarInterval</key>
+    <array>
+        <!-- 月曜日 9:30 -->
+        <dict>
+            <key>Weekday</key>
+            <integer>1</integer>
+            <key>Hour</key>
+            <integer>9</integer>
+            <key>Minute</key>
+            <integer>30</integer>
+        </dict>
+        <!-- 火曜日 9:30 -->
+        <dict>
+            <key>Weekday</key>
+            <integer>2</integer>
+            <key>Hour</key>
+            <integer>9</integer>
+            <key>Minute</key>
+            <integer>30</integer>
+        </dict>
+        <!-- 水曜日 9:30 -->
+        <dict>
+            <key>Weekday</key>
+            <integer>3</integer>
+            <key>Hour</key>
+            <integer>9</integer>
+            <key>Minute</key>
+            <integer>30</integer>
+        </dict>
+        <!-- 木曜日 9:30 -->
+        <dict>
+            <key>Weekday</key>
+            <integer>4</integer>
+            <key>Hour</key>
+            <integer>9</integer>
+            <key>Minute</key>
+            <integer>30</integer>
+        </dict>
+        <!-- 金曜日 9:30 -->
+        <dict>
+            <key>Weekday</key>
+            <integer>5</integer>
+            <key>Hour</key>
+            <integer>9</integer>
+            <key>Minute</key>
+            <integer>30</integer>
+        </dict>
+    </array>
+    
+    <key>StandardOutPath</key>
+    <string>/Users/kananagai/Downloads/楽天自動化ツール/03_検索順位チェック/ranking_tracker.log</string>
+    
+    <key>StandardErrorPath</key>
+    <string>/Users/kananagai/Downloads/楽天自動化ツール/03_検索順位チェック/ranking_tracker_error.log</string>
+    
+    <key>RunAtLoad</key>
+    <false/>
+</dict>
+</plist>

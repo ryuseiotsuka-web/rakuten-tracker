@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  rakuten-tracker:
+    build: .
+    container_name: rakuten-tracker
+    restart: unless-stopped
+    volumes:
+      # Mount data files to persist them
+      - ./user_data_ranking:/app/user_data_ranking
+      - ./rakuten_ranking_auto.csv:/app/rakuten_ranking_auto.csv
+      - ./last_row.txt:/app/last_row.txt
+      - ./ranking_tracker.log:/app/ranking_tracker.log
+      - ./credentials.json:/app/credentials.json
+    environment:
+      # Set timezone to Japan
+      - TZ=Asia/Tokyo
